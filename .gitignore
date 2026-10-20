@@ -1,4 +1,5 @@
 *.class
+bin/
 *.dat
 *.log
 OOP_LAB_2026-27.pdf

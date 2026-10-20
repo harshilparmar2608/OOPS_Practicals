@@ -1,4 +1,19 @@
+package service;
+
 import java.util.Scanner;
+import model.Account;
+import model.CurrentAccount;
+import model.Customer;
+import model.FixedDepositAccount;
+import model.InterestBearing;
+import model.Premium;
+import model.SavingsAccount;
+import model.WithdrawRule;
+import model.Command;
+import util.CommandParser;
+import util.StatementFormatter;
+
+import static util.Validator.isValidMobile;
 
 record BankInfo(String name, String branch) { }
 
@@ -35,62 +50,32 @@ public class MiniBank {
         accounts[1].withdraw(1000);
         accounts[2].withdraw(2000);
 
-        System.out.println("\nAccount Details & Polymorphic Interest Rates:");
+        System.out.println("\nAccount Details & Yearly Interest:");
 
         for (Account account : accounts) {
-            System.out.println(account.toString() + " | Interest Rate: " + account.interestRate() + "%");
-            if (account instanceof SavingsAccount sa) {
-                System.out.println("-> Savings minimum balance requirement: " + sa.getMinBalance());
-            } else if (account instanceof CurrentAccount ca) {
-                System.out.println("-> Current overdraft limit: " + ca.getOverdraftLimit());
-            } else if (account instanceof FixedDepositAccount) {
-                System.out.println("-> Fixed deposit funds are locked");
+            System.out.println(account.toString() + " | Interest Rate: " + account.interestRate() + "%"
+                    + " | Yearly Interest: " + account.yearlyInterest());
+            if (account instanceof Premium) {
+                System.out.println("-> Premium Account verified");
             }
         }
 
-        Account account1 = accounts[0];
-        Account account2 = accounts[1];
+        WithdrawRule rule1 = new WithdrawRule() {
+            @Override
+            public boolean allow(Account account, long amount) {
+                return account.canWithdraw(amount);
+            }
+        };
 
-        System.out.println("\nEquals Test:");
-        System.out.println("Account 1 equals Account 2: " + account1.equals(account2));
+        WithdrawRule rule2 = (account, amount) -> account.canWithdraw(amount);
 
-        System.out.println("\nInstanceof Test:");
-        Object obj = accounts[0];
-        if (obj instanceof Account) {
-            System.out.println("Object is an Account.");
-        } else {
-            System.out.println("Object is not an Account.");
-        }
+        System.out.println("\nWithdrawal Rule Tests:");
+        System.out.println("Anonymous Rule (withdraw 1000 from Savings): " + rule1.allow(accounts[0], 1000));
+        System.out.println("Lambda Rule (withdraw 1000 from FixedDeposit): " + rule2.allow(accounts[2], 1000));
 
-        Customer customer = new Customer(
-                "C001",
-                "Harshil",
-                "harshil@gmail.com",
-                "9876543210"
-        );
+        System.out.println("\nStatic Import Validator Test:");
+        System.out.println("Valid Mobile: " + isValidMobile("9876543210"));
 
-        Customer.Address address = new Customer.Address(
-                "Main Road",
-                "Vadodara",
-                "390001"
-        );
-
-        customer.setAddress(address);
-
-        System.out.println("\nCustomer Address:");
-        System.out.println("Line: " + customer.getAddress().getLine());
-        System.out.println("City: " + customer.getAddress().getCity());
-        System.out.println("Pincode: " + customer.getAddress().getPincode());
-
-        Customer copy = customer.clone();
-
-        System.out.println("\nClone Test:");
-        System.out.println("Original Customer: " + customer.getName());
-        System.out.println("Cloned Customer: " + copy.getName());
-
-        System.out.println("\nValidation & Command Parser Tests:");
-        System.out.println("Valid Mobile (9876543210): " + Validator.isValidMobile("9876543210"));
-        System.out.println("Invalid Mobile (12345): " + Validator.isValidMobile("12345"));
         Command cmd = CommandParser.parse("DEPOSIT AC0001 500");
         System.out.println("Parsed Command: " + cmd.type() + " " + cmd.accountNumber() + " " + cmd.amount());
         System.out.println(StatementFormatter.buildStatement(accounts[0]));
