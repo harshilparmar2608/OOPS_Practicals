@@ -1,12 +1,21 @@
 package model;
 
 import java.util.Objects;
+import model.annotation.Id;
+import model.annotation.MaxLength;
+import model.annotation.Positive;
 
 public abstract class Account implements Transactable, InterestBearing {
 
+    @Id
+    @MaxLength(20)
     private final String accountNumber;
+
     private String ownerName;
+
+    @Positive
     private long balance;
+
     private boolean active;
 
     private static long accountCounter = 0;
@@ -60,6 +69,7 @@ public abstract class Account implements Transactable, InterestBearing {
         return false;
     }
 
+    @Override
     public abstract double interestRate();
 
     public abstract boolean canWithdraw(long amount);

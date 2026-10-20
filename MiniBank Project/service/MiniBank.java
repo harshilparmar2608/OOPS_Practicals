@@ -10,6 +10,7 @@ import model.Premium;
 import model.SavingsAccount;
 import model.WithdrawRule;
 import model.Command;
+import util.AnnotationValidator;
 import util.CommandParser;
 import util.StatementFormatter;
 
@@ -72,6 +73,14 @@ public class MiniBank {
         System.out.println("\nWithdrawal Rule Tests:");
         System.out.println("Anonymous Rule (withdraw 1000 from Savings): " + rule1.allow(accounts[0], 1000));
         System.out.println("Lambda Rule (withdraw 1000 from FixedDeposit): " + rule2.allow(accounts[2], 1000));
+
+        System.out.println("\nAnnotation Validation Tests:");
+        Account invalidAccount = new SavingsAccount("InvalidUser", -100, 500);
+        String[] validationErrors = AnnotationValidator.validate(invalidAccount);
+        System.out.println("Errors for negative balance account:");
+        for (String err : validationErrors) {
+            System.out.println("- " + err);
+        }
 
         System.out.println("\nStatic Import Validator Test:");
         System.out.println("Valid Mobile: " + isValidMobile("9876543210"));
