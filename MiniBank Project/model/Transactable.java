@@ -1,6 +1,10 @@
 package model;
 
+import model.exception.InsufficientFundsException;
+import model.exception.InvalidAmountException;
+
 public interface Transactable {
-    void deposit(long amount);
-    boolean withdraw(long amount);
+    long getBalance();
+    void deposit(long amount) throws InvalidAmountException;
+    boolean withdraw(long amount) throws InvalidAmountException, InsufficientFundsException;
 }

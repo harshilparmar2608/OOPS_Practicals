@@ -10,6 +10,9 @@ import model.Premium;
 import model.SavingsAccount;
 import model.WithdrawRule;
 import model.Command;
+import model.exception.BankException;
+import model.exception.InsufficientFundsException;
+import model.exception.InvalidAmountException;
 import util.AnnotationValidator;
 import util.CommandParser;
 import util.StatementFormatter;
@@ -24,6 +27,24 @@ enum MenuOption {
     WITHDRAW,
     TRANSFER,
     EXIT
+}
+
+class AuditLog implements AutoCloseable {
+    private String session;
+
+    public AuditLog(String session) {
+        this.session = session;
+        System.out.println("[AuditLog] Session started: " + session);
+    }
+
+    public void log(String message) {
+        System.out.println("[AuditLog] " + session + " -> " + message);
+    }
+
+    @Override
+    public void close() {
+        System.out.println("[AuditLog] Session closed: " + session);
+    }
 }
 
 public class MiniBank {
@@ -43,13 +64,53 @@ public class MiniBank {
         accounts[1] = new CurrentAccount("Bunny", 3000, 2000);
         accounts[2] = new FixedDepositAccount("Happiiee", 10000);
 
-        accounts[0].deposit(1000);
-        accounts[1].deposit(2000);
-        accounts[2].deposit(5000);
+        System.out.println("\n--- Deposit / Withdraw with Exception Handling ---");
 
-        accounts[0].withdraw(500);
-        accounts[1].withdraw(1000);
-        accounts[2].withdraw(2000);
+        try {
+            accounts[0].deposit(1000);
+            System.out.println("Deposited 1000 to " + accounts[0].getAccountNumber());
+
+            accounts[1].deposit(2000);
+            System.out.println("Deposited 2000 to " + accounts[1].getAccountNumber());
+
+            accounts[0].withdraw(500);
+            System.out.println("Withdrew 500 from " + accounts[0].getAccountNumber());
+
+            accounts[2].withdraw(2000);
+            System.out.println("Withdrew 2000 from " + accounts[2].getAccountNumber());
+
+        } catch (InvalidAmountException e) {
+            System.out.println("Amount error: " + e.getMessage());
+        } catch (InsufficientFundsException e) {
+            System.out.println("Funds error: " + e.getMessage() + " | Shortfall: " + e.getShortfall());
+        } finally {
+            System.out.println("Initial setup operations complete.");
+        }
+
+        System.out.println("\n--- Transfer Demo with Exception Handling ---");
+        try {
+            accounts[0].transfer(accounts[1], 10000);
+        } catch (InvalidAmountException e) {
+            System.out.println("Transfer failed - Amount error: " + e.getMessage());
+        } catch (InsufficientFundsException e) {
+            System.out.println("Transfer failed - " + e.getMessage());
+        }
+
+        System.out.println("\n--- Try-With-Resources: AuditLog Demo ---");
+        try (AuditLog log = new AuditLog("LAB-08")) {
+            log.log("Validated accounts on startup");
+            accounts[0].deposit(500);
+            log.log("Deposited 500 to " + accounts[0].getAccountNumber());
+        } catch (InvalidAmountException e) {
+            System.out.println("Audit deposit failed: " + e.getMessage());
+        }
+
+        System.out.println("\n--- Invalid Amount Demo ---");
+        try {
+            accounts[0].deposit(-500);
+        } catch (InvalidAmountException e) {
+            System.out.println("Caught: " + e.getMessage());
+        }
 
         System.out.println("\nAccount Details & Yearly Interest:");
 
